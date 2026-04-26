@@ -1,0 +1,500 @@
+{
+  "name": "001_Lead Capture & AI Scoring",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Request a Free Quote",
+        "formDescription": "Fill in the details below and we'll get back to you within minutes.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "Your Full Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Address",
+              "fieldType": "email",
+              "placeholder": "your@email.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What type of business do you run?",
+              "placeholder": "e.g. HVAC, dental clinic, freelance designer...",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What do you need help with?",
+              "fieldType": "textarea",
+              "placeholder": "Describe what you're looking for, the problem you're trying to solve, or what service you need..",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your budget range?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Under $500"
+                  },
+                  {
+                    "option": "$500 – $2,000"
+                  },
+                  {
+                    "option": "$2,000 – $5,000"
+                  },
+                  {
+                    "option": "$5,000+"
+                  },
+                  {
+                    "option": "Not sure yet"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your timeline?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "As soon as possible"
+                  },
+                  {
+                    "option": "Within the next month"
+                  },
+                  {
+                    "option": "1 – 3 months"
+                  },
+                  {
+                    "option": "Just exploring for now"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -320,
+        32
+      ],
+      "id": "cb8d9712-da4b-4793-9cb8-7f60fe9129bf",
+      "name": "Lead Capture Form",
+      "webhookId": "f16c2e17-0ee1-4777-b4d2-894e6f126c7b"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Here is the contact form submission. Please score this lead and write the reply email.\n\nName: {{ $('Lead Capture Form').item.json[\"Full Name\"] }}\nEmail: {{ $('Lead Capture Form').item.json[\"Email Address\"] }}\nBusiness Type: {{ $('Lead Capture Form').item.json[\"What type of business do you run?\"] }}\nWhat they need: {{ $('Lead Capture Form').item.json[\"What do you need help with?\"] }}\nBudget: {{ $('Lead Capture Form').item.json[\"What is your budget range?\"] }}\nTimeline: {{ $('Lead Capture Form').item.json[\"What is your timeline?\"] }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "You are a lead qualification assistant for a service business. Your job is to read a contact form submission and do three things:\n\n1. Score the lead from 1 to 10 based on how valuable they are as a potential client\n2. Write a short, warm, personalised reply email\n3. Return everything as a single JSON object\n\nSCORING RUBRIC — maximum 10 points total:\n\nBudget fit (0–3 points):\n- $5,000+ → 3 points\n- $2,000–$5,000 → 2 points\n- $500–$2,000 → 1 point\n- Under $500 or Not sure yet → 0 points\n\nTimeline urgency (0–3 points):\n- As soon as possible → 3 points\n- Within the next month → 2 points\n- 1–3 months → 1 point\n- Just exploring for now → 0 points\n\nUse case clarity (0–2 points):\n- Specific and detailed — clear problem, clear scope → 2 points\n- Some detail but still vague → 1 point\n- One line, very vague, no real context → 0 points\n\nOverall fit (0–2 points):\n- Real business, real need, looks like a genuine enquiry → 2 points\n- Uncertain — might be a student, researcher, or tyre-kicker → 1 point\n- Does not appear to be a genuine business enquiry → 0 points\n\nROUTING TIERS:\n- Score 7–10 = HOT\n- Score 4–6 = WARM\n- Score 1–3 = COLD\n\nEMAIL WRITING RULES:\n- Use the lead's first name only (not full name)\n- Keep the email under 100 words\n- HOT leads: warm, enthusiastic tone. Mention one specific detail from their message to show you read it. End with a clear next step — invite them to reply to book a call.\n- WARM leads: friendly and helpful. Acknowledge their need. Tell them you will review and follow up shortly.\n- COLD leads: polite and professional. Thank them. Let them know you will be in touch when you have availability.\n- Never sound like an automated system. Write like a real person who just read their message five minutes ago.\n- Sign off every email with: Waqas | Build With Waqas\n\nCRITICAL OUTPUT RULE:\nReturn ONLY the JSON object below. No explanation. No markdown code fences. No extra text before or after. Just the raw JSON.\n\n{\n  \"score\": [number between 1 and 10],\n  \"tier\": \"[HOT or WARM or COLD]\",\n  \"reasoning\": \"[2-3 sentences explaining why you gave this score]\",\n  \"email_subject\": \"[a personalised subject line for the reply email]\",\n  \"email_body\": \"[the full email body, plain text only, no HTML tags]\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        32
+      ],
+      "id": "8d2a4e6b-4500-4143-b9a9-bae8eeae55e3",
+      "name": "Score Lead & Write Email",
+      "credentials": {
+        "anthropicApi": {
+          "id": "RhUuHFD4fBWpwwP6",
+          "name": "Anthropic - PM Waqas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the text output from Claude\nconst item = $input.first().json;\n\n// Handle both possible output structures from n8n's Anthropic node\nlet rawText = item.text || (item.content && item.content[0] && item.content[0].text);\n\n// Strip markdown code fences if Claude added them (e.g. ```json ... ```)\nrawText = rawText.replace(/^```json\\s*/i, '').replace(/\\s*```$/, '').trim();\n\n// Parse the cleaned text into a real JSON object\nconst parsed = JSON.parse(rawText);\n\n// Return all the fields as flat, usable data\nreturn [{\n  json: {\n    score: parsed.score,\n    tier: parsed.tier,\n    reasoning: parsed.reasoning,\n    email_subject: parsed.email_subject,\n    email_body: parsed.email_body\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        32
+      ],
+      "id": "f08bd2b9-a1ae-4789-96a4-19b8d4bebf9d",
+      "name": "Parse Claude Output"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4407187d-372a-4cd0-b256-6925e3a17c75",
+              "leftValue": "={{ $json.tier }}",
+              "rightValue": "HOT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        32
+      ],
+      "id": "30adeeb1-320c-4dd1-bf8f-8bca075cd1d9",
+      "name": "Hot Lead?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Lead Capture Form').item.json['Email Address'] }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_body.replace(/\\n/g, '<br>') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        -48
+      ],
+      "id": "de4af586-071a-4a43-ac71-3c7d669e147d",
+      "name": "Send HOT Lead Email",
+      "webhookId": "00da6ac1-1818-4427-a51d-0cd13904c8c0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQKnXT3o2A0ESPJd",
+          "name": "Gmail (Munawar Automation/prod)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Lead Capture Form').item.json['Email Address'] }}",
+        "subject": "=Thanks for reaching out, {{ $('Lead Capture Form').item.json[\"Full Name\"].split(' ')[0] }}",
+        "message": "=Hi {{ $('Lead Capture Form').item.json[\"Full Name\"].split(' ')[0] }},<br><br>  Thanks for reaching out — we've received your message and will take a look at the details you've shared.<br><br>  We'll be in touch within 24 hours.<br><br>  Waqas | Build With Waqas",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        128
+      ],
+      "id": "fb4cc630-0e15-416e-9fed-11a3e19222a6",
+      "name": "Send Acknowledgment Email",
+      "webhookId": "e57dae24-44e8-4acf-9e10-2d862a10de3f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQKnXT3o2A0ESPJd",
+          "name": "Gmail (Munawar Automation/prod)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RG3qDe70oqHTbrAONunk1t8djpk8KiXkUA1LYWDGTa8",
+          "mode": "list",
+          "cachedResultName": "001_Lead Tracker — Build With Waqas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RG3qDe70oqHTbrAONunk1t8djpk8KiXkUA1LYWDGTa8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RG3qDe70oqHTbrAONunk1t8djpk8KiXkUA1LYWDGTa8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Full Name": "={{ $('Lead Capture Form').item.json['Full Name'] }}",
+            "Email": "={{ $('Lead Capture Form').item.json['Email Address'] }}",
+            "Business Type": "={{ $('Lead Capture Form').item.json['What type of business do you run?'] }}",
+            "What They Need": "={{ $('Lead Capture Form').item.json['What do you need help with?'] }}",
+            "Budget": "={{ $('Lead Capture Form').item.json['What is your budget range?'] }}",
+            "Timeline": "={{ $('Lead Capture Form').item.json['What is your timeline?'] }}",
+            "Score": "={{ $('Parse Claude Output').item.json.score }}",
+            "Tier": "={{ $('Parse Claude Output').item.json.tier }}",
+            "Reasoning": "={{ $('Parse Claude Output').item.json.reasoning }}",
+            "Email Subject Sent": "={{ $('Parse Claude Output').item.json.email_subject }}",
+            "Form Submitted At": "={{ $('Lead Capture Form').item.json.submittedAt }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "displayName": "Business Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "What They Need",
+              "displayName": "What They Need",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tier",
+              "displayName": "Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reasoning",
+              "displayName": "Reasoning",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Subject Sent",
+              "displayName": "Email Subject Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Form Submitted At",
+              "displayName": "Form Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        48
+      ],
+      "id": "6efa9be1-af43-4e3d-8ee5-0e8c9f65b505",
+      "name": "Log Lead to Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WX9Zk6rEHs8JIbnd",
+          "name": "Google Sheets - PM Waqas"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Lead Capture Form": [
+      {
+        "json": {
+          "Full Name": "John Smith",
+          "Email Address": "waqas@munawarautomation.com",
+          "What type of business do you run?": "HVAC Company",
+          "What do you need help with?": "I run a 5-truck HVAC business and need an automated system to follow up with homeowners who fill in our quote request form overnight",
+          "What is your budget range?": "$2,000 – $5,000",
+          "What is your timeline?": "As soon as possible",
+          "submittedAt": "2026-04-26T16:54:35.253+05:00",
+          "formMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Lead Capture Form": {
+      "main": [
+        [
+          {
+            "node": "Score Lead & Write Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Lead & Write Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Output": {
+      "main": [
+        [
+          {
+            "node": "Hot Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Lead?": {
+      "main": [
+        [
+          {
+            "node": "Send HOT Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Acknowledgment Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send HOT Lead Email": {
+      "main": [
+        [
+          {
+            "node": "Log Lead to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Acknowledgment Email": {
+      "main": [
+        [
+          {
+            "node": "Log Lead to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2dd1d05f-1242-4b35-bb48-fafe270eb854",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d426075296b981ff711d6a3dee98440419d2fc444e9dadeddf3afbb7070069d3"
+  },
+  "id": "Hu2IbY9zccsA0Z3c",
+  "tags": [
+    {
+      "name": "business",
+      "id": "uohl4v9IPb9PwZGA",
+      "updatedAt": "2026-04-25T07:36:23.127Z",
+      "createdAt": "2026-04-25T07:36:23.127Z"
+    }
+  ]
+}
