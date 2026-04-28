@@ -1,0 +1,670 @@
+{
+  "name": "002_Email Triage Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -688,
+        -152
+      ],
+      "id": "fd20112a-ebc4-444f-bf7e-a652e169aba0",
+      "name": "Watch Gmail Inbox",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQKnXT3o2A0ESPJd",
+          "name": "Gmail (Munawar Automation/prod)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Please classify this email.\n\nSubject: {{ $('Watch Gmail Inbox').item.json.subject }}\n\nFrom: {{ $('Watch Gmail Inbox').item.json.from.value[0].name }}\n\nBody:\n{{ $('Watch Gmail Inbox').item.json.text }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "=You are an email classification assistant for a service business. Your job is to \nread every incoming email and return a structured classification.\n\nCATEGORIES (pick exactly one):\n- sales_inquiry: Someone interested in hiring, buying, or working with the business\n- support_request: An existing client or customer needing help with something\n- complaint: Someone expressing dissatisfaction, frustration, or a problem\n- spam: Newsletters, promotions, automated notifications, cold outreach, receipts\n- internal: Team communication, personal emails, anything not from a client or prospect\n\nURGENCY SCORE (1–5):\n1 = No urgency — spam, newsletters, casual\n2 = Low — general enquiry, no time pressure\n3 = Medium — needs a reply within 24 hours\n4 = High — needs a reply today\n5 = Critical — needs immediate attention (angry client, missed deadline, emergency)\n\nRULES:\n- Complaints always score 4 or 5 on urgency — never lower\n- Sales inquiries with budget and timeline mentioned score 3 or above\n- Spam always scores 1\n- When in doubt between two categories, choose the higher-urgency one\n\nCRITICAL OUTPUT RULE:\nReturn ONLY the raw JSON below. No explanation. No markdown code fences. \nNo extra text before or after. Just the raw JSON.\n\n{\n  \"category\": \"[one of the 5 categories above]\",\n  \"urgency\": [number 1-5],\n  \"summary\": \"[one sentence describing what this email is about]\",\n  \"sender_name\": \"[first name of the sender if identifiable, otherwise Unknown]\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -152
+      ],
+      "id": "1a1f1836-d781-4fd1-8748-76407325e98b",
+      "name": "Classify Email",
+      "credentials": {
+        "anthropicApi": {
+          "id": "RhUuHFD4fBWpwwP6",
+          "name": "Anthropic - PM Waqas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Handle both output structures\nlet rawText = item.text || (item.content && item.content[0] && item.content[0].text);\n\n// Strip markdown code fences if present\nrawText = rawText.replace(/^```json\\s*/i, '').replace(/\\s*```$/, '').trim();\n\n// Parse into clean fields\nconst parsed = JSON.parse(rawText);\n\nreturn [{\n  json: {\n    category: parsed.category,\n    urgency: parsed.urgency,\n    summary: parsed.summary,\n    sender_name: parsed.sender_name\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -152
+      ],
+      "id": "f21ad960-cd3b-4753-a64c-40be287b6516",
+      "name": "Parse Classification"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "sales_inquiry",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c04901d8-7e73-4e76-83f0-c2464d27e669"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales Inquiry"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c704ebc3-3d42-4247-a309-eed2646bbd6c",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "support_request",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Support Request"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c8be73ca-8d73-4e73-be9d-643ca46c82dc",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "complaint",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Complaint"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0b18524e-34bd-418f-8f9b-5692dc84d19e",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1c4424c0-9562-49de-8597-219b251cd6ac",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "internal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Internal"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        -200
+      ],
+      "id": "1fb60155-5016-4604-acb4-32d7b96d8cee",
+      "name": "Route by Category"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Category: {{ $('Parse Classification').item.json.category }}\nSender name: {{ $('Parse Classification').item.json.sender_name }}\nSummary: {{ $('Parse Classification').item.json.summary }}\n\nOriginal subject: {{ $('Watch Gmail Inbox').item.json.subject }}\n\nOriginal email:\n{{ $('Watch Gmail Inbox').item.json.text }}\n\nPlease draft an appropriate reply."
+            }
+          ]
+        },
+        "options": {
+          "system": "=You are a professional email assistant writing replies on behalf of an AI Automation Agency owner, named Waqas. He specializes AI Automation for Service Business Owners.\n\nYou will receive an email and its classification. Write a draft reply appropriate \nto the category.\n\nREPLY RULES BY CATEGORY:\n\nsales_inquiry:\n- Warm, enthusiastic tone\n- Acknowledge their specific need — reference something concrete from their email\n- Express genuine interest in helping\n- Suggest a clear next step — offer a brief call or ask one clarifying question\n- Keep it under 100 words\n\nsupport_request:\n- Helpful, reassuring tone\n- Acknowledge their issue clearly by name\n- Let them know you are looking into it personally\n- Give a realistic timeframe for follow-up\n- Keep it under 80 words\n\ncomplaint:\n- Empathetic, professional tone — never defensive\n- Acknowledge their frustration directly\n- Apologise for the inconvenience\n- Let them know you are taking it seriously and will follow up shortly\n- Keep it under 80 words\n- Do not make specific promises you cannot guarantee\n\nGENERAL RULES:\n- Address the sender by their first name only\n- Never sound automated or templated\n- Write as if you personally just read this email five minutes ago\n- Sign off every reply with: Waqas | Build With Waqas\n\nCRITICAL OUTPUT RULE:\nReturn ONLY raw JSON. No markdown code fences. No explanation. Just the JSON.\n\n{\n  \"reply_subject\": \"Re: [original subject line here]\",\n  \"reply_body\": \"[full reply in plain text — use \\\\n for line breaks]\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -224
+      ],
+      "id": "468564c2-b379-416a-92c4-d9c2797211c6",
+      "name": "Draft Reply",
+      "credentials": {
+        "anthropicApi": {
+          "id": "RhUuHFD4fBWpwwP6",
+          "name": "Anthropic - PM Waqas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Handle both output structures\nlet rawText = item.text || (item.content && item.content[0] && item.content[0].text);\n\n// Strip markdown code fences if present\nrawText = rawText.replace(/^```json\\s*/i, '').replace(/\\s*```$/, '').trim();\n\n// Parse into clean fields\nconst parsed = JSON.parse(rawText);\n\nreturn [{\n  json: {\n    reply_subject: parsed.reply_subject,\n    reply_body: parsed.reply_body\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -224
+      ],
+      "id": "084f41fa-71ee-43fa-b2c1-9f6101516097",
+      "name": "Parse Reply"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.reply_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.reply_body.replace(/\\n/g, '<br>') }}",
+        "options": {
+          "sendTo": "={{ $('Watch Gmail Inbox').item.json.from.value[0].address }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        -224
+      ],
+      "id": "6f290588-bfe5-478e-8154-eb2c1ed0f89a",
+      "name": "Save as Gmail Draft",
+      "webhookId": "9d016d6d-35aa-4e1e-9fb7-de2f090f65b3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQKnXT3o2A0ESPJd",
+          "name": "Gmail (Munawar Automation/prod)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1eaF2gGWAPIpqJCwaDu9jjoPS1zct3rgtttFWyseOQG8",
+          "mode": "list",
+          "cachedResultName": "002_Email Triage Log — Build With Waqas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1eaF2gGWAPIpqJCwaDu9jjoPS1zct3rgtttFWyseOQG8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1eaF2gGWAPIpqJCwaDu9jjoPS1zct3rgtttFWyseOQG8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Subject": "={{ $('Watch Gmail Inbox').item.json.subject }}",
+            "Sender": "={{ $('Watch Gmail Inbox').item.json.from.value[0].name }}",
+            "Category": "={{ $('Parse Classification').item.json.category }}",
+            "Urgency": "={{ $('Parse Classification').item.json.urgency }}",
+            "Summary": "={{ $('Parse Classification').item.json.summary }}",
+            "Draft Created": "={{ ['sales_inquiry','support_request','complaint'].includes($('Parse Classification').item.json.category) ? 'Yes' : 'No' }}",
+            "Email ID": "={{ $('Watch Gmail Inbox').item.json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Draft Created",
+              "displayName": "Draft Created",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ID",
+              "displayName": "Email ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        -152
+      ],
+      "id": "3ef89d94-1d39-4e13-a38b-ffc1bfe28635",
+      "name": "Log to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WX9Zk6rEHs8JIbnd",
+          "name": "Google Sheets - PM Waqas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5ed20f16-317e-4c02-90c9-41ca12b0e4a9",
+              "leftValue": "={{ $('Parse Classification').item.json.urgency }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        -152
+      ],
+      "id": "1ed86a10-13d0-4f21-9d64-60c57e186a12",
+      "name": "Urgent?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0B0PMQ7FDF",
+          "mode": "list",
+          "cachedResultName": "urgent-alerts"
+        },
+        "text": "=🔴 URGENT EMAIL — Action Required\n\nFrom: {{ $('Watch Gmail Inbox').item.json.from.value[0].name }}\nCategory: {{ $('Parse Classification').item.json.category }}\nUrgency: {{ $('Parse Classification').item.json.urgency }}/5\nSubject: {{ $('Watch Gmail Inbox').item.json.subject }}\n\n{{ $('Parse Classification').item.json.summary }}\n\nOpen Gmail → Drafts to review and send the reply.\n",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1808,
+        -152
+      ],
+      "id": "9f4ec453-731a-45d7-a55f-5645e26bc9dc",
+      "name": "Send Urgent Alert",
+      "webhookId": "cfb362eb-4486-42f2-b608-3b87d42ad26e",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "zuDle13wXcfVIJWt",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        -152
+      ],
+      "id": "325d81e8-7ac6-447d-92ab-7bc29aa06083",
+      "name": "Mark as Read",
+      "webhookId": "22293a2e-621b-4707-95a4-4eeb2dfe4668",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mQKnXT3o2A0ESPJd",
+          "name": "Gmail (Munawar Automation/prod)"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Watch Gmail Inbox": {
+      "main": [
+        [
+          {
+            "node": "Mark as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Classification": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Reply": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Save as Gmail Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save as Gmail Draft": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Send Urgent Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Read": {
+      "main": [
+        [
+          {
+            "node": "Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f7d816ed-ac5b-475f-97da-ee37729ff2eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d426075296b981ff711d6a3dee98440419d2fc444e9dadeddf3afbb7070069d3"
+  },
+  "id": "gszqLbFzuw3hyMJK",
+  "tags": [
+    {
+      "updatedAt": "2026-04-28T07:53:24.881Z",
+      "createdAt": "2026-04-28T07:53:24.881Z",
+      "id": "96Z9B5Zn2TrjUagH",
+      "name": "BWW"
+    },
+    {
+      "updatedAt": "2026-04-25T07:36:23.127Z",
+      "createdAt": "2026-04-25T07:36:23.127Z",
+      "id": "uohl4v9IPb9PwZGA",
+      "name": "business"
+    }
+  ]
+}
