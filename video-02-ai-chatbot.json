@@ -1,0 +1,255 @@
+{
+  "name": "002 - AI Receptionist - Build With Waqas",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! I'm the virtual assistant for Munawar Automation. How can I help you today?",
+        "options": {
+          "inputPlaceholder": "Type your question here...",
+          "loadPreviousSession": "notSupported",
+          "subtitle": "We're here to help you 24/7",
+          "title": "Munawar Automation",
+          "responseMode": "streaming"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "34f11a87-09f1-4263-a620-1b811895a884",
+      "name": "Customer Chat",
+      "webhookId": "555bd6d1-4ee2-4bd6-a02b-1c4b73713f6b"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0.7
+        }
+      },
+      "id": "98e0dd19-7496-429d-884b-6650f1323bdb",
+      "name": "Claude Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        224
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "RhUuHFD4fBWpwwP6",
+          "name": "Anthropic - PM Waqas"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "",
+        "contextWindowLength": 10
+      },
+      "id": "1669a404-850a-49e1-8151-0c6e717fa87d",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Setup Instructions\n\n1. **Configure AI Receptionist**: Click the AI Receptionist node and fill in the system message with your business details\n2. **Connect Google Sheets**: Create a new Google Sheet with columns: Timestamp, Customer Message, AI Response\n3. **Add Credentials**: Add your Anthropic API key and Google Sheets OAuth2 credentials\n4. **Test**: Click \"Test workflow\" and use the chat interface\n5. **Deploy**: Activate the workflow and share the chat URL with customers",
+        "height": 200,
+        "width": 900,
+        "color": 4
+      },
+      "id": "ef2206e5-772a-4f7f-8060-1e35266ae37e",
+      "name": "Sticky Note 4d621987",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a friendly and professional virtual assistant for Munawar Automation, a business that builds AI-powered automation systems for small and medium businesses.\n\nYour job is to greet visitors, answer questions about the business, and encourage them to book a free discovery call.\n\nFIRST MESSAGE RULE: Before answering any question, always start by asking for the customer's name. Once they give it, use their name naturally throughout the conversation.\n\nSERVICES WE OFFER:\n- AI workflow automation using n8n\n- Lead capture and response systems\n- Invoice automation\n- Email triage and management\n- Custom automation builds for any business process\n\nWhen someone asks about services, respond naturally and conversationally based on what they share about their situation. Do not list every service robotically — instead, listen to what they need and speak to how automation could help their specific business.\n\nPRICING:\n- Discovery call: Free\n- Custom builds: Starting from £500\n- Monthly retainer (maintenance + support): From £150/month\n\nTONE:\n- Friendly, warm, and professional\n- Never use jargon — speak plainly\n- Keep responses concise — 2 to 3 sentences maximum per reply\n- Never make up information you do not have\n- Never use markdown formatting, bullet points, or line breaks in your responses. Write in plain plain text only, as if you are sending a WhatsApp message.\n\nDISCOVERY CALL — encourage this naturally:\nWhenever it feels relevant — after answering a question about services, pricing, or a specific business problem — gently suggest booking a free discovery call. Frame it like this: it is not a sales call, it is a 30-minute conversation to understand their business, what they are currently doing manually, and whether automation could genuinely help them. No commitment, no pressure. Just a conversation. The goal is to understand their needs first.\n\nUse natural language like:\n\"If you'd like, we could jump on a quick discovery call — it's completely free and there's no obligation. It's just a chance for us to understand your setup and see if there's a good fit.\"\n\nIF SOMEONE WANTS TO BOOK:\nTell them to email waqas@munawarautomation.com or visit www.munawarautomation.com to schedule their free discovery call.\n\nIF ASKED SOMETHING YOU DON'T KNOW:\nSay \"That's a great question — let me get the right person to help you with that. Feel free to email us at waqas@munawarautomation.com and we'll get back to you shortly.\""
+        }
+      },
+      "id": "40116ec0-b170-470f-a2cc-13c5ea0b913c",
+      "name": "Receptionist Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1aF94lXxFZIr4rouz10ObxUm2_9MEMydyt58pI0LgtOk",
+          "mode": "list",
+          "cachedResultName": "002_AI Receptionist Log - Build With Waqas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aF94lXxFZIr4rouz10ObxUm2_9MEMydyt58pI0LgtOk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aF94lXxFZIr4rouz10ObxUm2_9MEMydyt58pI0LgtOk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ new Date().toLocaleString('en-GB') }}",
+            "Session ID": "={{ $('Customer Chat').item.json.sessionId }}",
+            "Customer Message": "={{ $('Customer Chat').item.json.chatInput }}",
+            "Claude Response": "={{ $json.output }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Session ID",
+              "displayName": "Session ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Message",
+              "displayName": "Customer Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Claude Response",
+              "displayName": "Claude Response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "27892698-7068-442b-8e4d-fc2ad360b09a",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WX9Zk6rEHs8JIbnd",
+          "name": "Google Sheets - PM Waqas"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Chat": {
+      "main": [
+        [
+          {
+            "node": "Receptionist Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Receptionist Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Receptionist Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4a07f80a-7401-4465-9366-203df3a5a603",
+  "meta": {
+    "instanceId": "d426075296b981ff711d6a3dee98440419d2fc444e9dadeddf3afbb7070069d3"
+  },
+  "id": "OAZzEXnYqdTrAOKv",
+  "tags": [
+    {
+      "updatedAt": "2026-04-28T07:53:24.881Z",
+      "createdAt": "2026-04-28T07:53:24.881Z",
+      "id": "96Z9B5Zn2TrjUagH",
+      "name": "BWW"
+    },
+    {
+      "updatedAt": "2026-04-25T07:36:23.127Z",
+      "createdAt": "2026-04-25T07:36:23.127Z",
+      "id": "uohl4v9IPb9PwZGA",
+      "name": "business"
+    }
+  ]
+}
